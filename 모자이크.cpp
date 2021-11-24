@@ -7,6 +7,6 @@ int main(){
 	openBMP("sample1.bmp");
 	mosaic();
 	writeBMP("output.bmp");
-	closeBMP();
+	closeBGR();
 	return 0;
 }
