@@ -12,6 +12,6 @@ int main(){
 	setXY(0, hInfo.biHeight*2/3, hInfo.biWidth, hInfo.biHeight);
 	sumBGR(-50, -50, -50, true);
 	writeBMP("output.bmp");
-	closeBMP();
+	closeBGR();
 	return 0;
 }
