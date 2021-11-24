@@ -18,9 +18,6 @@ unsigned char * B;
 unsigned char * G;
 unsigned char * R;
 
-
-//추가할 기능: 범위 지정, 범위 리셋, row와 column구현 
-
 int getIndex(int row, int col){
 	return row*(hInfo.biWidth) + col;
 }
@@ -55,125 +52,98 @@ void openBMP(const char *filename){
 	fclose(f);
 }
 
-void multipleBGR(float Bf, float Gf, float Rf, bool overwrite = false){
-	if (not overwrite){
-		for (int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				B[getIndex(i,j)] = (int)(rawB[getIndex(i,j)]*Bf);
-				G[getIndex(i,j)] = (int)(rawG[getIndex(i,j)]*Gf);
-				R[getIndex(i,j)] = (int)(rawR[getIndex(i,j)]*Rf);
-			}
+int getWidth(){
+	return hInfo.biWidth;
+}
+
+int getHeight(){
+	return hInfo.biHeight;
+}
+
+void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
+	for (int i = y0; i < y1; i++){
+		for(int j = x0; j < x1; j++){
+			B[getIndex(i,j)] = (int)(arrB[getIndex(i,j)]*Bf);
+			G[getIndex(i,j)] = (int)(arrG[getIndex(i,j)]*Gf);
+			R[getIndex(i,j)] = (int)(arrR[getIndex(i,j)]*Rf);
 		}
 	}
-	else{
-		for (int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				B[getIndex(i,j)] = (int)(B[getIndex(i,j)]*Bf);
-				G[getIndex(i,j)] = (int)(G[getIndex(i,j)]*Gf);
-				R[getIndex(i,j)] = (int)(R[getIndex(i,j)]*Rf);
-			}
+}
+
+void multipleBGR(float Bf, float Gf, float Rf, bool overwrite = false){
+	if (not overwrite)
+		multipleWith(rawB, rawG, rawR, Bf, Gf, Rf);
+	else
+		multipleWith(B, G, R, Bf, Gf, Rf);
+}
+
+void sumWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
+	for(int i = y0; i < y1; i++){
+		for(int j = x0; j < x1; j++){
+			if (arrB[getIndex(i,j)]+Bf>255 || arrB[getIndex(i,j)]+Bf<0)
+				B[getIndex(i,j)] = (arrB[getIndex(i,j)]+Bf>255) ? 255 : 0;
+			else
+				B[getIndex(i,j)] = int(arrB[getIndex(i,j)]+Bf);
+				
+			if (arrG[getIndex(i,j)]+Gf>255 || arrG[getIndex(i,j)]+Gf<0)
+				G[getIndex(i,j)] = (arrG[getIndex(i,j)]+Gf>255) ? 255 : 0;
+			else
+				G[getIndex(i,j)] = int(arrG[getIndex(i,j)]+Gf);
+			
+			if (arrR[getIndex(i,j)]+Rf>255 || arrR[getIndex(i,j)]+Rf<0)
+				R[getIndex(i,j)] = (arrR[getIndex(i,j)]+Rf>255) ? 255 : 0;
+			else
+				R[getIndex(i,j)] = int(arrR[getIndex(i,j)]+Rf);
 		}
 	}
 }
 
 void sumBGR(float Bf, float Gf, float Rf,  bool overwrite = false){
-	if (not overwrite){
-		for(int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				if (rawB[getIndex(i,j)]+Bf>255 || rawB[getIndex(i,j)]+Bf<0){
-					B[getIndex(i,j)] = (rawB[getIndex(i,j)]+Bf>255) ? 255 : 0;
-				}
-				else{
-					B[getIndex(i,j)] = int(rawB[getIndex(i,j)]+Bf);
-				}
-				if (rawG[getIndex(i,j)]+Gf>255 || rawG[getIndex(i,j)]+Gf<0){
-					G[getIndex(i,j)] = (rawG[getIndex(i,j)]+Gf>255) ? 255 : 0;
-				}
-				else{
-					G[getIndex(i,j)] = int(rawG[getIndex(i,j)]+Gf);
-				}
-				if (rawR[getIndex(i,j)]+Rf>255 || rawR[getIndex(i,j)]+Rf<0){
-					R[getIndex(i,j)] = (rawR[getIndex(i,j)]+Rf>255) ? 255 : 0;
-				}
-				else{
-					R[getIndex(i,j)] = int(rawR[getIndex(i,j)]+Rf);
-				}
-			}
-		}
-	}
-	else{
-		for(int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				if (B[getIndex(i,j)]+Bf>255 || B[getIndex(i,j)]+Bf<0){
-					B[getIndex(i,j)] = (B[getIndex(i,j)]+Bf>255) ? 255 : 0;
-				}
-				else{
-					B[getIndex(i,j)] = int(B[getIndex(i,j)]+Bf);
-				}
-				if (G[getIndex(i,j)]+Gf>255 || G[getIndex(i,j)]+Gf<0){
-					G[getIndex(i,j)] = (G[getIndex(i,j)]+Gf>255) ? 255 : 0;
-				}
-				else{
-					G[getIndex(i,j)] = int(G[getIndex(i,j)]+Gf);
-				}
-				if (R[getIndex(i,j)]+Rf>255 || R[getIndex(i,j)]+Rf<0){
-					R[getIndex(i,j)] = (R[getIndex(i,j)]+Rf>255) ? 255 : 0;
-				}
-				else{
-					R[getIndex(i,j)] = int(R[getIndex(i,j)]+Rf);
-				}
-			}
+	if (not overwrite)
+		sumWith(rawB, rawG, rawR, Bf, Gf, Rf);
+	else
+		sumWith(B, G, R, Bf, Gf, Rf);
+}
+
+void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+	for(int i = y0; i < y1; i++){
+		for(int j = x0; j < x1; j++){
+			B[getIndex(i,j)]=arrB[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
+			G[getIndex(i,j)]=arrG[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
+			R[getIndex(i,j)]=arrR[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
 		}
 	}
 }
 
 void mosaic(bool overwrite = false){
-	if (not overwrite){
-		for(int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				B[getIndex(i,j)]=rawB[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
-				G[getIndex(i,j)]=rawG[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
-				R[getIndex(i,j)]=rawR[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
-			}
-		}
-	}
-	else{
-		for(int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				B[getIndex(i,j)]=B[getIndex(i,j)/MOSAIC*MOSAIC];
-				G[getIndex(i,j)]=G[getIndex(i,j)/MOSAIC*MOSAIC];
-				R[getIndex(i,j)]=R[getIndex(i,j)/MOSAIC*MOSAIC];
-			}
+	if (not overwrite)
+		mosaicWith(rawB, rawG, rawR);
+	else
+		mosaicWith(B, G, R);
+}
+
+void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+	int x_gap;
+	int y_gap;
+	for(int i = y0+1; i < y1-1; i++){
+		for(int j = x0+1; j < x1-1; j++){
+			int sum = (arrB[getIndex(i,j)] + arrG[getIndex(i,j)] + arrR[getIndex(i,j)]);
+			x_gap = (sum - (arrB[getIndex(i,j+1)] + arrG[getIndex(i,j+1)] + arrR[getIndex(i,j+1)])) / 3;
+			y_gap = (sum - (rawB[getIndex(i+1,j)] + arrG[getIndex(i+1,j)] + arrR[getIndex(i+1,j)])) / 3;
+			
+			if(x_gap>GAP || x_gap<-GAP || y_gap>GAP || y_gap<-GAP)
+				B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 0;
+			else
+				B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 255;
 		}
 	}
 }
 
 void drawline(bool overwrite = false){
-	int x_gap;
-	int y_gap;
-	if (not overwrite){
-		for(int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				int sum = (rawB[getIndex(i,j)] + rawG[getIndex(i,j)] + rawR[getIndex(i,j)]);
-				x_gap = (sum - (rawB[getIndex(i,j+1)] + rawG[getIndex(i,j+1)] + rawR[getIndex(i,j+1)])) / 3;
-				y_gap = (sum - (rawB[getIndex(i+1,j)] + rawG[getIndex(i+1,j)] + rawR[getIndex(i+1,j)])) / 3;
-				
-				if(x_gap>GAP || x_gap<-GAP || y_gap>GAP || y_gap<-GAP)
-					B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 0;
-				else
-					B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 255;
-			}
-		}
-	}
-	else{
-		for(int i = y0; i < y1; i++){
-			for(int j = x0; j < x1; j++){
-				B[getIndex(i,j)]=B[getIndex(i,j)/MOSAIC*MOSAIC];
-				G[getIndex(i,j)]=G[getIndex(i,j)/MOSAIC*MOSAIC];
-				R[getIndex(i,j)]=R[getIndex(i,j)/MOSAIC*MOSAIC];
-			}
-		}
-	}
+	if (not overwrite)
+		drawlineWith(rawB, rawG, rawR);
+	else
+		drawlineWith(B, G, R);
 }
 
 void writeBMP(const char *filename){
