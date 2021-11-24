@@ -14,7 +14,6 @@ int main(){
 	setXY(0, hInfo.biHeight/2, hInfo.biWidth/2, hInfo.biHeight);
 	multipleBGR(0, 0, 1, true);
 	writeBMP("output.bmp");
-	closeBMP();
+	closeBGR();
 	return 0;
 }
-
