@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <Windows.h>
 #include "BmpProcess.h"
 
 int main()
@@ -12,4 +9,3 @@ int main()
 	
 	return 0;
 }
-
