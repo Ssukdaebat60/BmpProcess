@@ -1,9 +1,10 @@
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <Windows.h> 
+#include <stdio.h>
+#include <stdlib.h>
+#include <Windows.h>
 
-#define MOSAIC 8 
-#define GAP 10
+#define MOSAIC 8 // lower -> more pixels
+#define GAP 50 // lower -> more lines
+#define THRESHOLDING 70 //lower -> whiter
 
 BITMAPFILEHEADER hf;
 BITMAPINFOHEADER hInfo;
@@ -18,6 +19,15 @@ unsigned char * B;
 unsigned char * G;
 unsigned char * R;
 
+
+int getWidth(){
+	return hInfo.biWidth;
+}
+
+int getHeight(){
+	return hInfo.biHeight;
+}
+
 int getIndex(int row, int col){
 	return row*(hInfo.biWidth) + col;
 }
@@ -25,10 +35,11 @@ int getIndex(int row, int col){
 void openBMP(const char *filename){
 	FILE *f;
 	f = fopen(filename, "rb");
+
 	if (f == NULL) return ;
-	fread(&hf, sizeof(BITMAPFILEHEADER), 1, f);  
+	fread(&hf, sizeof(BITMAPFILEHEADER), 1, f);
 	fread(&hInfo, sizeof(BITMAPINFOHEADER), 1, f);
-	
+
 	ImgSize = hInfo.biWidth * hInfo.biHeight;
 	x1 = hInfo.biWidth;
 	y1 = hInfo.biHeight;
@@ -41,23 +52,20 @@ void openBMP(const char *filename){
 	R = (unsigned char *)malloc(ImgSize);
 	
 	for (int i = 0; i < ImgSize; i++){
-		rawB[i] = getc(f);
+		rawB[i] = fgetc(f);
 		B[i] = rawB[i];
-		rawG[i] = getc(f);
+		rawG[i] = fgetc(f);
 		G[i] = rawG[i];
-		rawR[i] = getc(f);
+		rawR[i] = fgetc(f);
 		R[i] = rawR[i];
 	}
 	
 	fclose(f);
 }
 
-int getWidth(){
-	return hInfo.biWidth;
-}
-
-int getHeight(){
-	return hInfo.biHeight;
+void print(){
+	printf("%d\n", sizeof(hf));
+	printf("%d\n", sizeof(hInfo));
 }
 
 void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
@@ -70,11 +78,11 @@ void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR
 	}
 }
 
-void multipleBGR(float Bf, float Gf, float Rf, bool overwrite = false){
-	if (not overwrite)
-		multipleWith(rawB, rawG, rawR, Bf, Gf, Rf);
-	else
+void multipleBGR(float Bf, float Gf, float Rf, bool overwrite = true){
+	if (overwrite)
 		multipleWith(B, G, R, Bf, Gf, Rf);
+	else
+		multipleWith(rawB, rawG, rawR, Bf, Gf, Rf);
 }
 
 void sumWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
@@ -98,11 +106,11 @@ void sumWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], f
 	}
 }
 
-void sumBGR(float Bf, float Gf, float Rf,  bool overwrite = false){
-	if (not overwrite)
-		sumWith(rawB, rawG, rawR, Bf, Gf, Rf);
-	else
+void sumBGR(float Bf, float Gf, float Rf,  bool overwrite = true){
+	if (overwrite)
 		sumWith(B, G, R, Bf, Gf, Rf);
+	else
+		sumWith(rawB, rawG, rawR, Bf, Gf, Rf);
 }
 
 void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
@@ -115,11 +123,11 @@ void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]
 	}
 }
 
-void mosaic(bool overwrite = false){
-	if (not overwrite)
-		mosaicWith(rawB, rawG, rawR);
-	else
+void mosaic(bool overwrite = true){
+	if (overwrite)
 		mosaicWith(B, G, R);
+	else
+		mosaicWith(rawB, rawG, rawR);
 }
 
 void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
@@ -127,35 +135,96 @@ void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR
 	int y_gap;
 	for(int i = y0+1; i < y1-1; i++){
 		for(int j = x0+1; j < x1-1; j++){
-			int sum = (arrB[getIndex(i,j)] + arrG[getIndex(i,j)] + arrR[getIndex(i,j)]);
-			x_gap = (sum - (arrB[getIndex(i,j+1)] + arrG[getIndex(i,j+1)] + arrR[getIndex(i,j+1)])) / 3;
-			y_gap = (sum - (rawB[getIndex(i+1,j)] + arrG[getIndex(i+1,j)] + arrR[getIndex(i+1,j)])) / 3;
+			int x_gap[3];
+			int y_gap[3];
+			x_gap[0] = arrB[getIndex(i,j)] - arrB[getIndex(i,j+1)];
+			x_gap[1] = arrG[getIndex(i,j)] - arrG[getIndex(i,j+1)];
+			x_gap[2] = arrR[getIndex(i,j)] - arrR[getIndex(i,j+1)];
+			y_gap[0] = arrB[getIndex(i,j)] - arrB[getIndex(i+1,j)];
+			y_gap[1] = arrG[getIndex(i,j)] - arrG[getIndex(i+1,j)];
+			y_gap[2] = arrR[getIndex(i,j)] - arrR[getIndex(i+1,j)];
 			
-			if(x_gap>GAP || x_gap<-GAP || y_gap>GAP || y_gap<-GAP)
-				B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 0;
-			else
-				B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 255;
+			for(int k = 0; k < 3; k++){
+				if(abs(x_gap[k]) > GAP || abs(y_gap[k]) > GAP){
+					B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 0;
+					break;
+				}
+				else if(k == 2)
+					B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 255;
+			}
 		}
 	}
 }
 
-void drawline(bool overwrite = false){
-	if (not overwrite)
-		drawlineWith(rawB, rawG, rawR);
-	else
+void drawline(bool overwrite = true){
+	if (overwrite)
 		drawlineWith(B, G, R);
+	else
+		drawlineWith(rawB, rawG, rawR);
+}
+
+void grayWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+	for(int i = y0; i < y1; i++){
+		for(int j = x0; j < x1; j++){
+			int index = getIndex(i, j);
+			int g =  arrB[index]*0.114 + arrG[index]*0.587 + arrR[index]*0.299;
+			arrB[index] = arrG[index] = arrR[index] = g;
+		}
+	}
+}
+
+void gray(bool overwrite = true){
+	if (overwrite)
+	    grayWith(B, G, R);
+	else
+		grayWith(rawB, rawG, rawR);
+} 
+
+void binarizationWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+	for(int i = y0; i < y1; i++){
+		for(int j = x0; j < x1; j++){
+			arrB[getIndex(i,j)] = (arrB[getIndex(i,j)] > THRESHOLDING) ? 255 : 0 ;
+			arrG[getIndex(i,j)] = (arrG[getIndex(i,j)] > THRESHOLDING) ? 255 : 0 ;
+			arrR[getIndex(i,j)] = (arrR[getIndex(i,j)] > THRESHOLDING) ? 255 : 0 ;
+		}
+	}
+}
+
+void binarization(bool overwrite = true){
+	if (overwrite)
+	    binarizationWith(B, G, R);
+	else
+		binarizationWith(rawB, rawG, rawR);
+}
+
+void reverseWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+	for(int i = y0; i < y1; i++){
+		for(int j = x0; j < x1; j++){
+		arrB[getIndex(i,j)] = 255 - arrB[getIndex(i,j)];
+		arrG[getIndex(i,j)] = 255 - arrG[getIndex(i,j)];
+		arrR[getIndex(i,j)] = 255 - arrR[getIndex(i,j)];
+		}
+	}
+}
+
+void reverse(bool overwrite = true){
+	if (overwrite)
+		reverseWith(B, G, R);
+	else
+		reverseWith(rawB, rawG, rawR);
 }
 
 void writeBMP(const char *filename){
-	FILE *f;
+	FILE *f = NULL;
 	f = fopen(filename, "wb"); 
-	fwrite(&hf, sizeof(BYTE), sizeof(BITMAPFILEHEADER), f);
-	fwrite(&hInfo, sizeof(BYTE), sizeof(BITMAPINFOHEADER), f);
-	for (int i = 0; i < ImgSize; i++){
-		putc(B[i],f);
-		putc(G[i],f);
-		putc(R[i],f);
+	fwrite(&hf, sizeof(BITMAPFILEHEADER), 1, f);
+	fwrite(&hInfo, sizeof(BITMAPINFOHEADER), 1, f);
+	for (int i = 0; i < ImgSize+hInfo.biHeight; i++){
+		fputc(B[i],f);
+		fputc(G[i],f);
+		fputc(R[i],f);
 	}
+
 	fclose(f);
 }
 
