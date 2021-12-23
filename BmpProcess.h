@@ -63,11 +63,6 @@ void openBMP(const char *filename){
 	fclose(f);
 }
 
-void print(){
-	printf("%d\n", sizeof(hf));
-	printf("%d\n", sizeof(hInfo));
-}
-
 void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
 	for (int i = y0; i < y1; i++){
 		for(int j = x0; j < x1; j++){
