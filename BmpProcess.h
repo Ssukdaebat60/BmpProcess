@@ -19,18 +19,28 @@ unsigned char * B;
 unsigned char * G;
 unsigned char * R;
 
-
-int getWidth(){
-	return hInfo.biWidth;
-}
-
-int getHeight(){
-	return hInfo.biHeight;
-}
-
-int getIndex(int row, int col){
-	return row*(hInfo.biWidth) + col;
-}
+void openBMP(const char *filename);
+void writeBMP(const char *filename);
+void closeBGR();
+void multipleBGR(float Bf, float Gf, float Rf, bool overwrite);
+void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf);
+void sumBGR(float Bf, float Gf, float Rf,  bool overwrite);
+void sumWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf);
+void mosaic(bool overwrite);
+void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]);
+void drawline(bool overwrite);
+void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]);
+void gray(bool overwrite);
+void grayWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]);
+void binarization(bool overwrite);
+void binarizationWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]);
+void reverse(bool overwrite);
+void reverseWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]);
+void setXY(int new_x0, int new_y0, int new_x1, int new_y1);
+void resetXY();
+int getWidth();
+int getHeight();
+int getIndex(int row, int col);
 
 void openBMP(const char *filename){
 	FILE *f;
@@ -63,6 +73,36 @@ void openBMP(const char *filename){
 	fclose(f);
 }
 
+void writeBMP(const char *filename){
+	FILE *f = NULL;
+	f = fopen(filename, "wb"); 
+	fwrite(&hf, sizeof(BITMAPFILEHEADER), 1, f);
+	fwrite(&hInfo, sizeof(BITMAPINFOHEADER), 1, f);
+	for (int i = 0; i < ImgSize+hInfo.biHeight; i++){
+		fputc(B[i],f);
+		fputc(G[i],f);
+		fputc(R[i],f);
+	}
+
+	fclose(f);
+}
+
+void closeBGR(){
+	free(rawB);
+	free(rawG);
+	free(rawR); 
+	free(B);
+	free(G);
+	free(R);
+}
+
+void multipleBGR(float Bf, float Gf, float Rf, bool overwrite = true){
+	if (overwrite)
+		multipleWith(B, G, R, Bf, Gf, Rf);
+	else
+		multipleWith(rawB, rawG, rawR, Bf, Gf, Rf);
+}
+
 void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
 	for (int i = y0; i < y1; i++){
 		for(int j = x0; j < x1; j++){
@@ -73,11 +113,11 @@ void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR
 	}
 }
 
-void multipleBGR(float Bf, float Gf, float Rf, bool overwrite = true){
+void sumBGR(float Bf, float Gf, float Rf,  bool overwrite = true){
 	if (overwrite)
-		multipleWith(B, G, R, Bf, Gf, Rf);
+		sumWith(B, G, R, Bf, Gf, Rf);
 	else
-		multipleWith(rawB, rawG, rawR, Bf, Gf, Rf);
+		sumWith(rawB, rawG, rawR, Bf, Gf, Rf);
 }
 
 void sumWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
@@ -101,11 +141,11 @@ void sumWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], f
 	}
 }
 
-void sumBGR(float Bf, float Gf, float Rf,  bool overwrite = true){
+void mosaic(bool overwrite = true){
 	if (overwrite)
-		sumWith(B, G, R, Bf, Gf, Rf);
+		mosaicWith(B, G, R);
 	else
-		sumWith(rawB, rawG, rawR, Bf, Gf, Rf);
+		mosaicWith(rawB, rawG, rawR);
 }
 
 void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
@@ -118,11 +158,11 @@ void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]
 	}
 }
 
-void mosaic(bool overwrite = true){
+void drawline(bool overwrite = true){
 	if (overwrite)
-		mosaicWith(B, G, R);
+		drawlineWith(B, G, R);
 	else
-		mosaicWith(rawB, rawG, rawR);
+		drawlineWith(rawB, rawG, rawR);
 }
 
 void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
@@ -151,12 +191,12 @@ void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR
 	}
 }
 
-void drawline(bool overwrite = true){
+void gray(bool overwrite = true){
 	if (overwrite)
-		drawlineWith(B, G, R);
+	    grayWith(B, G, R);
 	else
-		drawlineWith(rawB, rawG, rawR);
-}
+		grayWith(rawB, rawG, rawR);
+} 
 
 void grayWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
 	for(int i = y0; i < y1; i++){
@@ -168,12 +208,12 @@ void grayWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
 	}
 }
 
-void gray(bool overwrite = true){
+void binarization(bool overwrite = true){
 	if (overwrite)
-	    grayWith(B, G, R);
+	    binarizationWith(B, G, R);
 	else
-		grayWith(rawB, rawG, rawR);
-} 
+		binarizationWith(rawB, rawG, rawR);
+}
 
 void binarizationWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
 	for(int i = y0; i < y1; i++){
@@ -185,11 +225,11 @@ void binarizationWith(unsigned char arrB[], unsigned char arrG[], unsigned char 
 	}
 }
 
-void binarization(bool overwrite = true){
+void reverse(bool overwrite = true){
 	if (overwrite)
-	    binarizationWith(B, G, R);
+		reverseWith(B, G, R);
 	else
-		binarizationWith(rawB, rawG, rawR);
+		reverseWith(rawB, rawG, rawR);
 }
 
 void reverseWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
@@ -200,36 +240,6 @@ void reverseWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[
 		arrR[getIndex(i,j)] = 255 - arrR[getIndex(i,j)];
 		}
 	}
-}
-
-void reverse(bool overwrite = true){
-	if (overwrite)
-		reverseWith(B, G, R);
-	else
-		reverseWith(rawB, rawG, rawR);
-}
-
-void writeBMP(const char *filename){
-	FILE *f = NULL;
-	f = fopen(filename, "wb"); 
-	fwrite(&hf, sizeof(BITMAPFILEHEADER), 1, f);
-	fwrite(&hInfo, sizeof(BITMAPINFOHEADER), 1, f);
-	for (int i = 0; i < ImgSize+hInfo.biHeight; i++){
-		fputc(B[i],f);
-		fputc(G[i],f);
-		fputc(R[i],f);
-	}
-
-	fclose(f);
-}
-
-void closeBGR(){
-	free(rawB);
-	free(rawG);
-	free(rawR); 
-	free(B);
-	free(G);
-	free(R);
 }
 
 void setXY(int new_x0, int new_y0, int new_x1, int new_y1){
@@ -244,4 +254,16 @@ void resetXY(){
 	y0 = 0;
 	x1 = hInfo.biWidth;
 	y1 = hInfo.biHeight;
+}
+
+int getWidth(){
+	return hInfo.biWidth;
+}
+
+int getHeight(){
+	return hInfo.biHeight;
+}
+
+int getIndex(int row, int col){
+	return row*(hInfo.biWidth) + col;
 }
