@@ -15,6 +15,7 @@ It provides functions such as...
  - gray
  - binarization
  - reverse
+ - contrast
 
   
 ## Requirements
