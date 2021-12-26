@@ -36,6 +36,7 @@ void binarization(bool overwrite);
 void binarizationWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]);
 void reverse(bool overwrite);
 void reverseWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]);
+void contrast(float num, bool overwrite);
 void setXY(int new_x0, int new_y0, int new_x1, int new_y1);
 void resetXY();
 int getWidth();
@@ -106,9 +107,20 @@ void multipleBGR(float Bf, float Gf, float Rf, bool overwrite = true){
 void multipleWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], float Bf, float Gf, float Rf){
 	for (int i = y0; i < y1; i++){
 		for(int j = x0; j < x1; j++){
-			B[getIndex(i,j)] = (int)(arrB[getIndex(i,j)]*Bf);
-			G[getIndex(i,j)] = (int)(arrG[getIndex(i,j)]*Gf);
-			R[getIndex(i,j)] = (int)(arrR[getIndex(i,j)]*Rf);
+			if (arrB[getIndex(i,j)]*Bf>255 || arrB[getIndex(i,j)]*Bf<0)
+				B[getIndex(i,j)] = (arrB[getIndex(i,j)]*Bf>255) ? 255 : 0;
+			else
+				B[getIndex(i,j)] = int(arrB[getIndex(i,j)]*Bf);
+				
+			if (arrG[getIndex(i,j)]*Gf>255 || arrG[getIndex(i,j)]*Gf<0)
+				G[getIndex(i,j)] = (arrG[getIndex(i,j)]*Gf>255) ? 255 : 0;
+			else
+				G[getIndex(i,j)] = int(arrG[getIndex(i,j)]*Gf);
+			
+			if (arrR[getIndex(i,j)]*Rf>255 || arrR[getIndex(i,j)]*Rf<0)
+				R[getIndex(i,j)] = (arrR[getIndex(i,j)]*Rf>255) ? 255 : 0;
+			else
+				R[getIndex(i,j)] = int(arrR[getIndex(i,j)]*Rf);
 		}
 	}
 }
@@ -240,6 +252,13 @@ void reverseWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[
 		arrR[getIndex(i,j)] = 255 - arrR[getIndex(i,j)];
 		}
 	}
+}
+
+void contrast(float num, bool overwrite = true){
+	if (overwrite)
+		multipleWith(B, G, R, num, num, num);
+	else
+		multipleWith(rawB, rawG, rawR, num, num, num);
 }
 
 void setXY(int new_x0, int new_y0, int new_x1, int new_y1){
