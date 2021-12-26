@@ -23,4 +23,4 @@ It provides functions such as...
 
 
 ## Usage
-Please refer to the example.
+Please refer to the example and docs
