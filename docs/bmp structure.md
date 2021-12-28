@@ -1,6 +1,9 @@
 # BMP
 - ## Uncompressed Format  
+> It save img data immediately without any changes.
 
+- ## Color Model
+> RGB (true color model does not need to have a color table.)
 
 - ## Structure
 > ### Header
