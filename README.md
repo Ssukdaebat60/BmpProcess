@@ -1,6 +1,6 @@
 # BmpProcess
 
-It is cpp Header to process the bmp image file(only 16-bit, 24-bit, 32-bit).
+It is cpp Header to process the bmp image file(only 16-bit, 32-bit).
 
 It provides functions such as...
  - open the bmp file
