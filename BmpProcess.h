@@ -2,10 +2,6 @@
 #include <stdlib.h>
 #include <Windows.h>
 
-#define MOSAIC 8 // lower -> more pixels
-#define GAP 50 // lower -> more lines
-#define THRESHOLDING 70 //lower -> whiter
-
 BITMAPFILEHEADER hf;
 BITMAPINFOHEADER hInfo;
 
@@ -42,6 +38,7 @@ void resetXY();
 int getWidth();
 int getHeight();
 int getIndex(int row, int col);
+void median();
 
 void openBMP(const char *filename){
 	FILE *f;
@@ -153,31 +150,31 @@ void sumWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], f
 	}
 }
 
-void mosaic(bool overwrite = true){
+void mosaic(int mosaic, bool overwrite = true){ // lower Mosaics -> more pixels
 	if (overwrite)
-		mosaicWith(B, G, R);
+		mosaicWith(B, G, R, mosaic);
 	else
-		mosaicWith(rawB, rawG, rawR);
+		mosaicWith(rawB, rawG, rawR, mosaic);
 }
 
-void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+void mosaicWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], int mosaic){
 	for(int i = y0; i < y1; i++){
 		for(int j = x0; j < x1; j++){
-			B[getIndex(i,j)]=arrB[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
-			G[getIndex(i,j)]=arrG[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
-			R[getIndex(i,j)]=arrR[getIndex(i/MOSAIC*MOSAIC,j/MOSAIC*MOSAIC)];
+			B[getIndex(i,j)]=arrB[getIndex(i/mosaic*mosaic,j/mosaic*mosaic)];
+			G[getIndex(i,j)]=arrG[getIndex(i/mosaic*mosaic,j/mosaic*mosaic)];
+			R[getIndex(i,j)]=arrR[getIndex(i/mosaic*mosaic,j/mosaic*mosaic)];
 		}
 	}
 }
 
-void drawline(bool overwrite = true){
+void drawline(int gap, bool overwrite = true){ // lower gap -> more lines
 	if (overwrite)
-		drawlineWith(B, G, R);
+		drawlineWith(B, G, R, gap);
 	else
-		drawlineWith(rawB, rawG, rawR);
+		drawlineWith(rawB, rawG, rawR, gap);
 }
 
-void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], int gap){
 	int x_gap;
 	int y_gap;
 	for(int i = y0+1; i < y1-1; i++){
@@ -192,7 +189,7 @@ void drawlineWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR
 			y_gap[2] = arrR[getIndex(i,j)] - arrR[getIndex(i+1,j)];
 			
 			for(int k = 0; k < 3; k++){
-				if(abs(x_gap[k]) > GAP || abs(y_gap[k]) > GAP){
+				if(abs(x_gap[k]) > gap || abs(y_gap[k]) > gap){
 					B[getIndex(i,j)] = G[getIndex(i,j)] = R[getIndex(i,j)] = 0;
 					break;
 				}
@@ -215,24 +212,28 @@ void grayWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
 		for(int j = x0; j < x1; j++){
 			int index = getIndex(i, j);
 			int g =  arrB[index]*0.114 + arrG[index]*0.587 + arrR[index]*0.299;
-			arrB[index] = arrG[index] = arrR[index] = g;
+			B[index] = G[index] = R[index] = g;
 		}
 	}
 }
 
-void binarization(bool overwrite = true){
+void binarization(int thresholding, bool overwrite = true){ //lower thresholding -> whiter image
+	if (thresholding > 255 || thresholding < 0){
+		printf("thresholding must be 0~255");
+		return ;
+	}
 	if (overwrite)
-	    binarizationWith(B, G, R);
+	    binarizationWith(B, G, R, thresholding);
 	else
-		binarizationWith(rawB, rawG, rawR);
+		binarizationWith(rawB, rawG, rawR, thresholding);
 }
 
-void binarizationWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
+void binarizationWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[], int thresholding){
 	for(int i = y0; i < y1; i++){
 		for(int j = x0; j < x1; j++){
-			arrB[getIndex(i,j)] = (arrB[getIndex(i,j)] > THRESHOLDING) ? 255 : 0 ;
-			arrG[getIndex(i,j)] = (arrG[getIndex(i,j)] > THRESHOLDING) ? 255 : 0 ;
-			arrR[getIndex(i,j)] = (arrR[getIndex(i,j)] > THRESHOLDING) ? 255 : 0 ;
+			B[getIndex(i,j)] = (arrB[getIndex(i,j)] > thresholding) ? 255 : 0 ;
+			G[getIndex(i,j)] = (arrG[getIndex(i,j)] > thresholding) ? 255 : 0 ;
+			R[getIndex(i,j)] = (arrR[getIndex(i,j)] > thresholding) ? 255 : 0 ;
 		}
 	}
 }
@@ -247,9 +248,9 @@ void reverse(bool overwrite = true){
 void reverseWith(unsigned char arrB[], unsigned char arrG[], unsigned char arrR[]){
 	for(int i = y0; i < y1; i++){
 		for(int j = x0; j < x1; j++){
-		arrB[getIndex(i,j)] = 255 - arrB[getIndex(i,j)];
-		arrG[getIndex(i,j)] = 255 - arrG[getIndex(i,j)];
-		arrR[getIndex(i,j)] = 255 - arrR[getIndex(i,j)];
+		B[getIndex(i,j)] = 255 - arrB[getIndex(i,j)];
+		G[getIndex(i,j)] = 255 - arrG[getIndex(i,j)];
+		R[getIndex(i,j)] = 255 - arrR[getIndex(i,j)];
 		}
 	}
 }
